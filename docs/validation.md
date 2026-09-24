@@ -1,5 +1,27 @@
 # Validation record
 
+## Windows x64 validation, 2026-09-24
+
+The repaired wrapper was tested locally with Visual Studio Community 2026
+(MSVC 19.51.36248), Windows SDK 10.0.26100.0, CMake 4.3.3, Python 3.14.6,
+and V8's pinned Clang/Ninja:
+
+- All 21 wrapper tests passed, including single- and multi-config FetchContent.
+- The real Release library and consumer built with the Visual Studio generator.
+- CTest passed; the executable printed `V8 14.8.178.33: 42`.
+- Copying only the executable into a clean directory passed the same smoke test.
+- An offline rebuild reported `ninja: no work to do`; archive, generated header,
+  and executable timestamps were unchanged. CTest passed again.
+- A focused callable-traits compile check failed before the inherited-call
+  patch and passed afterward using the pinned Clang with MSVC's STL.
+- WSL Ubuntu with GCC 15.2 reproduced the missing `<memory>` error; all bigint
+  translation units passed syntax checks after applying the header patch.
+
+These local results supplement the full platform CI matrix; the WSL syntax
+checks alone do not establish Linux runtime success.
+
+## Initial macOS validation
+
 Initial validation on **2026-09-24**, using the V8 14.8.178.33 lock in this
 repository:
 
