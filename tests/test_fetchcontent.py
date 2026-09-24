@@ -49,7 +49,10 @@ class FetchContentTests(unittest.TestCase):
         parent = root / "consumer"
         parent.mkdir()
         (parent / "CMakeLists.txt").write_text(
-            'cmake_minimum_required(VERSION 3.24)\nproject(consumer LANGUAGES CXX)\n'
+            'cmake_minimum_required(VERSION 3.24)\n'
+            # Reproduce MSVC's default on every host, so the empty-build-type
+            # test cannot accidentally depend on a compiler's initialization.
+            'set(CMAKE_BUILD_TYPE_INIT Debug)\nproject(consumer LANGUAGES CXX)\n'
             'include(FetchContent)\n'
             f'set(V8_SOURCE_DIR "{source.as_posix()}" CACHE PATH "")\n'
             'set(V8_OFFLINE ON CACHE BOOL "")\n'
@@ -74,7 +77,7 @@ class FetchContentTests(unittest.TestCase):
             parent = self.fixture(root)
             build = root / "consumer build"
             args = ["cmake", "-S", str(parent), "-B", str(build), "-G", generator]
-            if build_type:
+            if build_type is not None:
                 args.append("-DCMAKE_BUILD_TYPE=" + build_type)
             self.command(*args)
             stage = build / "_deps/v8_wrapper-build/stage"
@@ -87,7 +90,7 @@ class FetchContentTests(unittest.TestCase):
                 exe /= "consumer.exe" if os.name == "nt" else "consumer"
                 self.command(str(exe))
                 library = stage / config / "lib" / ("v8_monolith.lib" if os.name == "nt" else "libv8_monolith.a")
-                self.assertTrue(library.is_file())
+                self.assertTrue(library.is_file(), f"Missing staged library: {library}")
                 timestamp = (stage / config / "include/v8.h").stat().st_mtime_ns
                 self.command("cmake", "--build", str(build), "--config", config, "--target", "consumer")
                 self.assertEqual(timestamp, (stage / config / "include/v8.h").stat().st_mtime_ns)
@@ -96,7 +99,10 @@ class FetchContentTests(unittest.TestCase):
                 self.assertTrue(library.is_file(), "Deleted byproduct was not regenerated")
 
     def test_fetchcontent_single_config_default_release(self):
-        self.exercise("Ninja", ["Release"])
+        self.exercise("Ninja", ["Release"], build_type="")
+
+    def test_fetchcontent_single_config_initialized_debug(self):
+        self.exercise("Ninja", ["Debug"])
 
     def test_fetchcontent_debug_and_release_do_not_mix(self):
         self.exercise("Ninja Multi-Config", ["Debug", "Release"])

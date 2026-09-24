@@ -219,6 +219,9 @@ def gn_args(config):
         "symbol_level": 1 if debug or config["config"] == "RelWithDebInfo" else 0,
     }
     if config["target_os"] == "linux":
+        # Chromium enables GLib discovery while loading its Linux compiler
+        # config, even though standalone V8 has no GLib dependency.
+        args["use_glib"] = False
         # target_sysroot applies independently of use_sysroot. Keep Chromium's
         # implicit Debian sysroot off for host tools using the host libstdc++.
         args["use_sysroot"] = False

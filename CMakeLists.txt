@@ -113,7 +113,8 @@ foreach(config IN LISTS _v8_configs)
 endforeach()
 target_link_libraries(v8_monolith INTERFACE Threads::Threads ${CMAKE_DL_LIBS})
 if(_v8_os STREQUAL "linux")
-  target_link_libraries(v8_monolith INTERFACE rt)
+  # Chromium's Linux runtime config links libatomic with the system libstdc++.
+  target_link_libraries(v8_monolith INTERFACE rt atomic)
 elseif(_v8_os STREQUAL "mac")
   target_link_libraries(v8_monolith INTERFACE
     "-framework CoreFoundation" "-framework Foundation" "-framework Security")

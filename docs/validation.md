@@ -27,3 +27,24 @@ it has no dynamic V8 or ICU library dependency. The wrapper's CTest suite passed
 both registered tests (`v8_wrapper` and `v8_hello`). Debug and ICU-disabled
 runtime behavior still need their full CI builds; successful GN generation
 alone is not a runtime test.
+
+## First CI run: regressions and fixes
+
+[Run 35980746403](https://github.com/piovium/v8-cmake-barbara/actions/runs/35980746403)
+exposed two platform differences:
+
+- Linux GN generation tried to discover GLib through Chromium's default
+  configuration. Standalone V8 does not need GLib; the wrapper now sets
+  `use_glib=false`. Its exported Linux link interface also includes `atomic`,
+  as required by the pinned Chromium configuration when using the system STL.
+- All three Windows jobs failed a fixture assertion because MSVC initializes
+  an unspecified CMake build type to Debug. The test for the wrapper's Release
+  fallback now explicitly passes an empty build type; a separate test checks
+  the initialized Debug case. Both behaviors are exercised on every test host.
+
+After these fixes, all 19 Python tests passed on macOS arm64. Real Linux x64
+and arm64 GN generation also passed with a script launcher that rejects every
+pkg-config invocation; the same launcher reproduced both failures before the
+fix. This guard matters because Chromium's pkg-config helper otherwise skips
+discovery on macOS, so the original cross-target generation check missed the
+Linux failure. These checks do not replace full Linux and Windows CI builds.
