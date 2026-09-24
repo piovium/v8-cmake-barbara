@@ -158,6 +158,8 @@ is not synced or patched by this wrapper. First apply
 [patches/system-stl.patch](patches/system-stl.patch) in the V8 repository.
 Also apply [patches/system-stl-callable.patch](patches/system-stl-callable.patch)
 there for inherited callable signatures used by the MSVC STL.
+Apply [patches/system-stl-headers.patch](patches/system-stl-headers.patch) for
+explicit standard header dependencies as well.
 On Windows, also apply
 [patches/windows-runtime.patch](patches/windows-runtime.patch) in its `build`
 repository. Supplied tools/checkouts are an explicit escape hatch from the

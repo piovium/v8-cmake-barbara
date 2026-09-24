@@ -30,7 +30,8 @@ Windows. It adds one GN argument and two conditions; `/MD[d]` and `/MT[d]` remai
 implemented by upstream CRT configs. A second patch qualifies `std::nullptr_t`
 in V8's public template header and supplies an explicit zero to `value_or` for
 compatibility with system STLs. A callable-traits patch supports inherited call
-operators, including those in MSVC's `std::function`. External checkouts must have applicable patches
+operators, including those in MSVC's `std::function`. The header-dependency patch
+includes `<memory>` for bigint's `std::unique_ptr`. External checkouts must have applicable patches
 pre-applied. A failed patch check is an update
 failure, never a reason to silently ignore the patch or use `/NODEFAULTLIB`.
 

@@ -191,8 +191,8 @@ def prepare(config, lock, workspace):
     check_version(source, lock["version"])
     if not (source / "build/config/BUILDCONFIG.gn").is_file():
         raise RuntimeError(f"V8 dependencies are missing under {source}; run gclient sync first")
-    apply_patch(source, Path(config["patch"]).with_name("system-stl.patch"), external)
-    apply_patch(source, Path(config["patch"]).with_name("system-stl-callable.patch"), external)
+    for name in ("system-stl.patch", "system-stl-callable.patch", "system-stl-headers.patch"):
+        apply_patch(source, Path(config["patch"]).with_name(name), external)
     if config["target_os"] == "win":
         apply_runtime_patch(source, Path(config["patch"]), external)
     return source, env
