@@ -35,6 +35,17 @@ This retains iterator checking and compile-time initialization.
 `system-stl-msvc.patch` uses MSVC's `__assume(0)` for an unreachable path in
 the public Debug headers. Clang and GCC retain `__builtin_unreachable()`.
 
+# Linux archive relocations
+
+`linux-relocations.patch` applies to Chromium's **build repository** on Linux.
+It disables experimental CREL relocations, which GNU ld rejects, while retaining
+the pinned LLD for V8's own build tools. Exported archives use standard ELF
+relocations and work with the embedding application's system linker.
+
+```sh
+git -C /path/to/v8/build apply /path/to/v8-cmake/patches/linux-relocations.patch
+```
+
 # Windows CRT selection
 
 `windows-runtime.patch` applies to Chromium's **build repository** (the `build/`

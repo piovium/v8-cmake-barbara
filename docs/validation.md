@@ -23,6 +23,10 @@ Additional checks on **2026-09-25**:
   CTest using the offline workspace.
 - The real Debug archive linked to an MSVC consumer and executed JavaScript/Intl
   successfully after correcting the public-header unreachable intrinsic.
+- The full Debug CMake build and CTest passed. Its offline rebuild reported no
+  work and preserved archive, generated-header, and executable timestamps.
+- A Linux ELF probe built with pinned Clang reproduced GNU ld's CREL rejection;
+  the same source with standard relocations linked and ran successfully in WSL.
 
 These local results supplement the full platform CI matrix; the WSL syntax
 checks alone do not establish Linux runtime success.

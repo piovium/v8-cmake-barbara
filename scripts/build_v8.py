@@ -197,6 +197,8 @@ def prepare(config, lock, workspace):
         apply_patch(source, Path(config["patch"]).with_name(name), external)
     if config["target_os"] == "win":
         apply_runtime_patch(source, Path(config["patch"]), external)
+    elif config["target_os"] == "linux":
+        apply_patch(source / "build", Path(config["patch"]).with_name("linux-relocations.patch"), external)
     return source, env
 
 

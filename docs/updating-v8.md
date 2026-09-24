@@ -35,8 +35,11 @@ code, and do not hand-maintain V8 source lists. Use a released four-part V8 tag.
    git -C <v8-checkout> apply --check /absolute/path/to/patches/system-stl-constexpr.patch
    git -C <v8-checkout> apply --check /absolute/path/to/patches/system-stl-msvc.patch
    git -C <v8-checkout>/build apply --check /absolute/path/to/patches/windows-runtime.patch
+   git -C <v8-checkout>/build apply --check /absolute/path/to/patches/linux-relocations.patch
    ```
 
+   Check that Linux archives still link with GNU ld; refresh or remove the
+   relocation patch as upstream's CREL compatibility changes.
    The wrapper applies the CRT patch only on Windows. If upstream now supports
    CRT selection, remove that patch and use the setting. Otherwise refresh only the
    small CRT selection change; don't import unrelated modifications. Do not

@@ -28,6 +28,11 @@ class FetchContentTests(unittest.TestCase):
         postimage = "\n".join(line[1:] for line in lines
                               if line.startswith((" ", "+")) and not line.startswith("+++")) + "\n"
         (source / "build/config/win/BUILD.gn").write_text(postimage)
+        lines = (ROOT / "patches/linux-relocations.patch").read_text().splitlines()
+        postimage = "\n".join(line[1:] for line in lines
+                              if line.startswith((" ", "+")) and not line.startswith("+++")) + "\n"
+        (source / "build/config/compiler").mkdir(parents=True)
+        (source / "build/config/compiler/BUILD.gn").write_text(postimage)
         # Reconstruct patched context for each V8 system-STL patch target.
         target = None
         contents = []

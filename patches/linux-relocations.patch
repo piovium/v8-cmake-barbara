@@ -1,0 +1,18 @@
+--- a/config/compiler/BUILD.gn
++++ b/config/compiler/BUILD.gn
+@@ -668,13 +668,8 @@
+       cflags += [ "-ffp-contract=off" ]
+     }
+ 
+-    # Enable ELF CREL (see crbug.com/357878242) for all platforms that use ELF.
+-    # TODO(crbug.com/376278218): This causes segfault on Linux ARM builds.
+-    # It also causes segfault on Linux s390x:
+-    # https://github.com/llvm/llvm-project/issues/149511
+-    if (is_linux && use_lld && current_cpu != "arm" && current_cpu != "s390x") {
+-      cflags += [ "-Wa,--crel,--allow-experimental-crel" ]
+-    }
++    # Export ordinary ELF relocations so the static archive can be linked by
++    # the embedding application's system linker, including GNU ld.
+   }
+ 
+   # C11/C++11 compiler flags setup.

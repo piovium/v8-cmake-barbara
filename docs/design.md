@@ -38,6 +38,9 @@ pre-applied, including the Windows Debug constexpr-budget adjustment that keeps
 MSVC's iterator checking enabled. A failed patch check is an update
 failure, never a reason to silently ignore the patch or use `/NODEFAULTLIB`.
 
+The Linux build patch disables experimental CREL relocations so GNU ld can
+consume the exported archive. V8's internal links still use its pinned LLD.
+
 The system STL and RTTI settings make ordinary CMake consumers practical. They
 also mean this configuration cannot use the current V8 sandbox, which depends
 on Chromium's hardened libc++. This tradeoff is explicit in the README. The
