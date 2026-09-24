@@ -10,6 +10,7 @@ the types and runtime behavior. Apply it to prepared checkouts before building:
 git -C /path/to/v8 apply /path/to/v8-cmake/patches/system-stl.patch
 git -C /path/to/v8 apply /path/to/v8-cmake/patches/system-stl-callable.patch
 git -C /path/to/v8 apply /path/to/v8-cmake/patches/system-stl-headers.patch
+git -C /path/to/v8 apply /path/to/v8-cmake/patches/system-stl-atomic.patch
 ```
 
 `system-stl-callable.patch` allows V8's callable signature traits to recognize
@@ -19,6 +20,10 @@ The patch deduces that owner independently without changing the signature.
 
 `system-stl-headers.patch` includes `<memory>` where bigint uses
 `std::unique_ptr`, instead of relying on libc++'s transitive includes.
+
+`system-stl-atomic.patch` initializes a warning flag with `ATOMIC_FLAG_INIT`.
+Constructing `std::atomic_flag` from `false` is a libc++ extension; the standard
+initializer preserves the same initially clear state with the MSVC STL.
 
 # Windows CRT selection
 
