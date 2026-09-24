@@ -109,12 +109,18 @@ def checkout_depot(path, revision, offline):
     run(["git", "-C", path, "checkout", "--detach", revision])
 
 
-def build_environment(depot):
+def build_environment(depot, vs_install=""):
     env = os.environ.copy()
     # Keep the selected depot_tools revision; use the user's installed SDKs.
     env["DEPOT_TOOLS_UPDATE"] = "0"
     env["DEPOT_TOOLS_WIN_TOOLCHAIN"] = "0"
     env["DEPOT_TOOLS_METRICS"] = "0"
+    if vs_install:
+        # MSBuild supplies INCLUDE/LIB without necessarily setting VSINSTALLDIR.
+        # Upstream vcvars setup only clears those inherited paths when it knows
+        # a VS environment is active. Also honor CMake's selected VS instance.
+        env["GYP_MSVS_OVERRIDE_PATH"] = vs_install
+        env["VSINSTALLDIR"] = vs_install
     # Configure only child Git processes, leaving the user's global Git config
     # intact. Stable line endings keep the Windows patch applicable.
     count = int(env.get("GIT_CONFIG_COUNT", "0"))
@@ -153,7 +159,7 @@ def prepare(config, lock, workspace):
             checkout_depot(depot, lock["depot_tools_revision"], offline)
         elif not (depot / "gclient.py").is_file():
             raise RuntimeError(f"No gclient.py in V8_DEPOT_TOOLS_DIR: {depot}")
-    env = build_environment(depot)
+    env = build_environment(depot, config.get("vs_install", ""))
     if not external:
         # A separate solution directory avoids pulling unrelated Chromium trees.
         solution = {

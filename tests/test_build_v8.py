@@ -71,6 +71,13 @@ class BuildContractTests(unittest.TestCase):
             self.assertEqual(os.environ["GIT_CONFIG_COUNT"], "1")
             self.assertEqual(env["DEPOT_TOOLS_UPDATE"], "0")
 
+    def test_visual_studio_instance_is_forwarded_to_upstream(self):
+        with patch.dict(os.environ, {}, clear=True):
+            env = driver.build_environment(None, "C:/VS/2026")
+            self.assertEqual(env["GYP_MSVS_OVERRIDE_PATH"], "C:/VS/2026")
+            self.assertEqual(env["VSINSTALLDIR"], "C:/VS/2026")
+            self.assertNotIn("VSINSTALLDIR", os.environ)
+
     def test_sync_failure_does_not_leave_success_stamp(self):
         with tempfile.TemporaryDirectory() as temp:
             workspace = Path(temp)
