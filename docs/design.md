@@ -25,10 +25,12 @@ unchanged files. No configure-time network work or sub-build is necessary. The
 wrapper never edits a consumer's compiler flags or global build type. Generated
 output is confined to the binary tree; depot_tools also uses its standard caches.
 
-The single patch changes Chromium's `default_crt` and `release_crt` selection on
+The Windows patch changes Chromium's `default_crt` and `release_crt` selection on
 Windows. It adds one GN argument and two conditions; `/MD[d]` and `/MT[d]` remain
-implemented by upstream CRT configs. V8 source code is untouched. An external
-checkout must have this patch pre-applied. A failed patch check is an update
+implemented by upstream CRT configs. A second patch qualifies `std::nullptr_t`
+in V8's public template header and supplies an explicit zero to `value_or` for
+compatibility with system STLs. External checkouts must have applicable patches
+pre-applied. A failed patch check is an update
 failure, never a reason to silently ignore the patch or use `/NODEFAULTLIB`.
 
 The system STL and RTTI settings make ordinary CMake consumers practical. They

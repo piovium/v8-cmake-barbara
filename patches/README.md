@@ -1,3 +1,15 @@
+# System STL compatibility
+
+`system-stl.patch` applies to the V8 repository at the pinned revision. It
+qualifies `std::nullptr_t` in the public template header (libstdc++ does not
+provide the global alias) and makes the zero fallback for an optional byte
+explicit (older system STLs cannot deduce `value_or({})`). These changes preserve
+the types and runtime behavior. Apply it to prepared checkouts before building:
+
+```sh
+git -C /path/to/v8 apply /path/to/v8-cmake/patches/system-stl.patch
+```
+
 # Windows CRT selection
 
 `windows-runtime.patch` applies to Chromium's **build repository** (the `build/`
@@ -9,7 +21,7 @@ selection and the release CRT selection for build tools. The implementation of
 each CRT configuration remains upstream. The driver sets the argument from the
 consumer's `CMAKE_MSVC_RUNTIME_LIBRARY` and enables standard Debug STL iterators.
 
-No patch is needed on Linux or macOS. Managed Windows checkouts are patched once;
+The CRT patch is only needed on Windows. Managed checkouts are patched once;
 repeat builds detect the existing patch with a reverse applicability check.
 Prepared Windows checkouts must have it applied before use:
 

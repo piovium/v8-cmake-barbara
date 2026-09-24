@@ -5,8 +5,8 @@ Link **`v8::v8`** to get the complete static library, public headers, generated 
 definitions, C++20 requirement, and platform libraries. `v8::monolith` is an alias.
 
 V8 still builds with its own GN/Ninja files. This repository carries no source
-list, generated snapshot, or V8 runtime fork. It has one small Chromium build
-patch for selecting the Windows C runtime. The pinned release is **14.8.178.33**;
+list, generated snapshot, or V8 runtime fork. Small patches fix system-STL
+compatibility and select the Windows C runtime. The pinned release is **14.8.178.33**;
 both V8 and depot_tools commits are recorded in [v8-version.json](v8-version.json).
 
 ## Use with FetchContent
@@ -154,7 +154,9 @@ There is no `install()`/`find_package()` package yet; this is a build-tree wrapp
 
 Use `V8_SOURCE_DIR=/absolute/path/to/v8` for a checkout whose version header
 matches the lock and whose DEPS/hooks have already completed. Such a checkout
-is not synced or patched by this wrapper. On Windows, first apply
+is not synced or patched by this wrapper. First apply
+[patches/system-stl.patch](patches/system-stl.patch) in the V8 repository.
+On Windows, also apply
 [patches/windows-runtime.patch](patches/windows-runtime.patch) in its `build`
 repository. Supplied tools/checkouts are an explicit escape hatch from the
 managed toolchain pins.

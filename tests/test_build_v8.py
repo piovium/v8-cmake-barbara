@@ -76,10 +76,20 @@ class BuildContractTests(unittest.TestCase):
             workspace = Path(temp)
             cfg = config(source="", depot_tools="", offline="OFF")
             lock = driver.load_lock(ROOT / "v8-version.json")
-            with patch.object(driver, "checkout_depot"), patch.object(driver, "run", side_effect=subprocess.CalledProcessError(1, "gclient")):
+            with patch.object(driver, "checkout_depot"), patch.object(driver, "run_download", side_effect=subprocess.CalledProcessError(1, "gclient")):
                 with self.assertRaises(subprocess.CalledProcessError):
                     driver.prepare(cfg, lock, workspace)
             self.assertFalse((workspace / ".v8-cmake-sync.json").exists())
+
+    def test_download_retries_are_bounded(self):
+        failure = subprocess.CalledProcessError(1, "fetch")
+        with patch.object(driver, "run", side_effect=[failure, "done"]) as run, patch.object(driver.time, "sleep"):
+            self.assertEqual(driver.run_download(["fetch"]), "done")
+            self.assertEqual(run.call_count, 2)
+        with patch.object(driver, "run", side_effect=failure) as run, patch.object(driver.time, "sleep"):
+            with self.assertRaises(subprocess.CalledProcessError):
+                driver.run_download(["fetch"])
+            self.assertEqual(run.call_count, 3)
 
     def test_version_mismatch_is_rejected(self):
         with tempfile.TemporaryDirectory() as temp:

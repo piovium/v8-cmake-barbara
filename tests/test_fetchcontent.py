@@ -28,6 +28,18 @@ class FetchContentTests(unittest.TestCase):
         postimage = "\n".join(line[1:] for line in lines
                               if line.startswith((" ", "+")) and not line.startswith("+++")) + "\n"
         (source / "build/config/win/BUILD.gn").write_text(postimage)
+        # Reconstruct patched context for each V8 system-STL patch target.
+        target = None
+        contents = []
+        for line in (ROOT / "patches/system-stl.patch").read_text().splitlines() + ["+++ "]:
+            if line.startswith("+++ "):
+                if target is not None:
+                    target.parent.mkdir(parents=True, exist_ok=True)
+                    target.write_text("\n".join(contents) + "\n")
+                target = source / line[6:] if line[6:] else None
+                contents = []
+            elif line.startswith((" ", "+")):
+                contents.append(line[1:])
         version = json.loads((ROOT / "v8-version.json").read_text())["version"]
         names = ("MAJOR_VERSION", "MINOR_VERSION", "BUILD_NUMBER", "PATCH_LEVEL")
         (source / "include/v8-version.h").write_text("".join(
