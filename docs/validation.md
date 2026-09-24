@@ -27,6 +27,11 @@ Additional checks on **2026-09-25**:
   work and preserved archive, generated-header, and executable timestamps.
 - A Linux ELF probe built with pinned Clang reproduced GNU ld's CREL rejection;
   the same source with standard relocations linked and ran successfully in WSL.
+- All 22 wrapper tests passed on Windows and WSL Ubuntu after the multiarch
+  incremental-build fix. A real arm64 `v8_libbase` build completed 181 steps in
+  WSL with pinned Clang; repeating GN generation and Ninja reported no work.
+  Before the fix, even a single unchanged object rebuilt because its dependency
+  paths incorrectly resolved through the relative root-directory sysroot.
 
 These local results supplement the full platform CI matrix; the WSL syntax
 checks alone do not establish Linux runtime success.

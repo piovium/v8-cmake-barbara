@@ -257,7 +257,10 @@ def gn_args(config):
         # target_sysroot applies independently of use_sysroot. Keep Chromium's
         # implicit Debian sysroot off for host tools using the host libstdc++.
         args["use_sysroot"] = False
-        if config["sysroot"]:
+        # '/' denotes the host's multiarch layout, not a separate sysroot.
+        # GN rebases it to a relative path; Clang then finds GCC through /lib
+        # symlinks and emits dependencies that Ninja normalizes to missing paths.
+        if config["sysroot"] and config["sysroot"] != "/":
             args["target_sysroot"] = config["sysroot"]
     elif config["target_os"] == "mac":
         # Apple's linker understands the installed SDK's TAPI format, including

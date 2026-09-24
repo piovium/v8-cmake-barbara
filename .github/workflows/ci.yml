@@ -63,9 +63,11 @@ jobs:
       - name: Execute JavaScript and Intl smoke test
         run: ctest --test-dir build -C ${{ matrix.config }} --output-on-failure
       - name: Offline incremental rebuild
+        shell: bash
         run: |
           cmake -S examples/fetchcontent -B build -DV8_OFFLINE=ON
-          cmake --build build --config ${{ matrix.config }} --target hello
+          cmake --build build --config ${{ matrix.config }} --target hello | tee offline-build.log
+          grep -F 'ninja: no work to do.' offline-build.log
           ctest --test-dir build -C ${{ matrix.config }} --output-on-failure
       - name: Upload build metadata
         if: always()
@@ -73,6 +75,7 @@ jobs:
         with:
           name: metadata-${{ matrix.name }}
           path: |
+            offline-build.log
             build/_deps/v8_wrapper-build/gn/*/args.gn
             build/_deps/v8_wrapper-build/stage/*/build-info.json
             build/Testing/Temporary/LastTest.log

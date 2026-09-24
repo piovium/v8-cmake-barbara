@@ -158,8 +158,10 @@ is not synced or patched by this wrapper. First apply the system-STL patches
 listed in [patches/README.md](patches/README.md) in the V8 repository.
 On Windows, also apply
 [patches/windows-runtime.patch](patches/windows-runtime.patch) in its `build`
-repository. Supplied tools/checkouts are an explicit escape hatch from the
-managed toolchain pins.
+repository. On Linux, apply
+[patches/linux-relocations.patch](patches/linux-relocations.patch) in that `build`
+repository so the archive supports GNU ld. Supplied tools/checkouts are an explicit
+escape hatch from the managed toolchain pins.
 
 After a successful managed build, `V8_OFFLINE=ON` reuses the existing workspace.
 A fresh offline build needs a prepared source tree and its GN/Ninja/compiler

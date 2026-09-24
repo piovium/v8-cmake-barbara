@@ -44,6 +44,11 @@ class BuildContractTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "must match"):
             driver.gn_args(config(target_os="win", config="Debug"))
 
+    def test_multiarch_root_uses_compiler_discovery(self):
+        args = driver.gn_args(config(target_cpu="arm64", sysroot="/"))
+        self.assertIn('use_sysroot = false', args)
+        self.assertNotIn('target_sysroot =', args)
+
     def test_mac_sdk_and_deployment(self):
         args = driver.gn_args(config(target_os="mac", target_cpu="arm64",
                                     deployment_target="14.0", mac_sdk="macosx"))
