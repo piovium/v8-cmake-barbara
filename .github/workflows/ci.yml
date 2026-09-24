@@ -1,0 +1,78 @@
+name: Build and embed V8
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 180
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: linux-x64, os: ubuntu-24.04, config: Release, generator: Ninja, cross: false, static_crt: false }
+          - { name: linux-arm64, os: ubuntu-24.04, config: Release, generator: Ninja, cross: true, static_crt: false }
+          - { name: macos-arm64, os: macos-15, config: Release, generator: Ninja, cross: false, static_crt: false }
+          - { name: windows-x64-release, os: windows-2025, config: Release, generator: Ninja Multi-Config, cross: false, static_crt: false }
+          - { name: windows-x64-debug, os: windows-2025, config: Debug, generator: Ninja Multi-Config, cross: false, static_crt: false }
+          - { name: windows-x64-static-crt-no-intl, os: windows-2025, config: Release, generator: Ninja Multi-Config, cross: false, static_crt: true }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install CMake and Ninja
+        run: python -m pip install cmake ninja
+      - name: Configure MSVC environment
+        if: runner.os == 'Windows'
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+      - name: Linux cross tools
+        if: matrix.cross
+        run: sudo apt-get update && sudo apt-get install -y g++-aarch64-linux-gnu qemu-user
+      - name: Wrapper tests (no V8 downloads)
+        run: python -m unittest discover -s tests -v
+      - name: Configure FetchContent consumer
+        shell: bash
+        env:
+          BUILD_CONFIG: ${{ matrix.config }}
+          BUILD_GENERATOR: ${{ matrix.generator }}
+          CROSS: ${{ matrix.cross }}
+          STATIC_CRT: ${{ matrix.static_crt }}
+        run: |
+          args=()
+          if [ "$CROSS" = true ]; then
+            args+=("-DCMAKE_TOOLCHAIN_FILE=$GITHUB_WORKSPACE/cmake/toolchains/linux-arm64.cmake")
+            args+=("-DCMAKE_CROSSCOMPILING_EMULATOR=qemu-aarch64;-L;/usr/aarch64-linux-gnu")
+          fi
+          if [ "$STATIC_CRT" = true ]; then
+            args+=('-DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded$<$<CONFIG:Debug>:Debug>')
+            args+=('-DV8_ENABLE_I18N=OFF')
+          fi
+          cmake -S examples/fetchcontent -B build -G "$BUILD_GENERATOR" \
+            -DCMAKE_BUILD_TYPE="$BUILD_CONFIG" -DV8_BUILD_JOBS=2 "${args[@]}"
+      - name: Build real V8 and consumer
+        run: cmake --build build --config ${{ matrix.config }} --target hello
+      - name: Execute JavaScript and Intl smoke test
+        run: ctest --test-dir build -C ${{ matrix.config }} --output-on-failure
+      - name: Offline incremental rebuild
+        run: |
+          cmake -S examples/fetchcontent -B build -DV8_OFFLINE=ON
+          cmake --build build --config ${{ matrix.config }} --target hello
+          ctest --test-dir build -C ${{ matrix.config }} --output-on-failure
+      - name: Upload build metadata
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: metadata-${{ matrix.name }}
+          path: |
+            build/_deps/v8_wrapper-build/gn/*/args.gn
+            build/_deps/v8_wrapper-build/stage/*/build-info.json
+            build/Testing/Temporary/LastTest.log

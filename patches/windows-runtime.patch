@@ -1,0 +1,30 @@
+--- a/config/win/BUILD.gn
++++ b/config/win/BUILD.gn
+@@ -17,6 +17,9 @@
+ assert(is_win)
+ 
+ declare_args() {
++  # Allow standalone static V8 to match its CMake consumer runtime.
++  v8_cmake_use_dynamic_crt = true
++
+   # Turn this on to have the linker output extra timing information.
+   win_linker_timing = false
+ 
+@@ -511,7 +514,7 @@
+ # See https://msdn.microsoft.com/en-us/library/2kzt1wy3.aspx for a reference of
+ # what each value does.
+ config("default_crt") {
+-  if (is_component_build) {
++  if (is_component_build || v8_cmake_use_dynamic_crt) {
+     # Component mode: dynamic CRT. Since the library is shared, it requires
+     # exceptions or will give errors about things not matching, so keep
+     # exceptions on.
+@@ -534,7 +537,7 @@
+ # when the debug CRT is part of the bottleneck. This also avoids *implicitly*
+ # defining _DEBUG.
+ config("release_crt") {
+-  if (is_component_build) {
++  if (is_component_build || v8_cmake_use_dynamic_crt) {
+     cflags = [ "/MD" ]
+ 
+     # /MD specifies msvcrt.lib as the CRT library, which is the dynamic+release
