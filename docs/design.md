@@ -29,7 +29,8 @@ The Windows patch changes Chromium's `default_crt` and `release_crt` selection o
 Windows. It adds one GN argument and two conditions; `/MD[d]` and `/MT[d]` remain
 implemented by upstream CRT configs. A second patch qualifies `std::nullptr_t`
 in V8's public template header and supplies an explicit zero to `value_or` for
-compatibility with system STLs. External checkouts must have applicable patches
+compatibility with system STLs. A callable-traits patch supports inherited call
+operators, including those in MSVC's `std::function`. External checkouts must have applicable patches
 pre-applied. A failed patch check is an update
 failure, never a reason to silently ignore the patch or use `/NODEFAULTLIB`.
 

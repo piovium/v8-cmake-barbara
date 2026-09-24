@@ -25,16 +25,21 @@ code, and do not hand-maintain V8 source lists. Use a released four-part V8 tag.
 
 3. Use a **new build directory and workspace** for the first build. This avoids
    carrying modified Chromium build files or stale SDK/tool artifacts across a
-   roll. Once gclient has fetched the new tree, verify the only patch:
+   roll. Once gclient has fetched the new tree, verify the patches:
 
    ```sh
+   git -C <v8-checkout> apply --check /absolute/path/to/patches/system-stl.patch
+   git -C <v8-checkout> apply --check /absolute/path/to/patches/system-stl-callable.patch
    git -C <v8-checkout>/build apply --check /absolute/path/to/patches/windows-runtime.patch
    ```
 
-   The wrapper applies the patch only on Windows. If upstream now supports CRT
-   selection, remove the patch and use that setting. Otherwise refresh only the
+   The wrapper applies the CRT patch only on Windows. If upstream now supports
+   CRT selection, remove that patch and use the setting. Otherwise refresh only the
    small CRT selection change; don't import unrelated modifications. Do not
-   add V8 runtime patches to work around a toolchain or ABI mismatch.
+   add V8 runtime patches to work around a toolchain or ABI mismatch. Recheck
+   the standard type qualification, optional fallback, and inherited callable
+   fixes in the system-STL patches, removing each hunk once upstream includes
+   an equivalent correction.
 
 4. Run the offline suite and all real CI configurations:
 

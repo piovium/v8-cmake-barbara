@@ -1,0 +1,14 @@
+--- a/src/base/functional/bind-internal.h
++++ b/src/base/functional/bind-internal.h
+@@ -107,9 +107,9 @@
+ struct ExtractCallableRunTypeImpl;
+ 
+ #define BIND_INTERNAL_EXTRACT_CALLABLE_RUN_TYPE_WITH_QUALS(quals)     \
+-  template <typename Callable, typename R, typename... Args>          \
++  template <typename Callable, typename Owner, typename R, typename... Args> \
+   struct ExtractCallableRunTypeImpl<Callable,                         \
+-                                    R (Callable::*)(Args...) quals> { \
++                                    R (Owner::*)(Args...) quals> { \
+     using Type = R(Args...);                                          \
+   }
+ 

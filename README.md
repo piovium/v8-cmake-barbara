@@ -156,6 +156,8 @@ Use `V8_SOURCE_DIR=/absolute/path/to/v8` for a checkout whose version header
 matches the lock and whose DEPS/hooks have already completed. Such a checkout
 is not synced or patched by this wrapper. First apply
 [patches/system-stl.patch](patches/system-stl.patch) in the V8 repository.
+Also apply [patches/system-stl-callable.patch](patches/system-stl-callable.patch)
+there for inherited callable signatures used by the MSVC STL.
 On Windows, also apply
 [patches/windows-runtime.patch](patches/windows-runtime.patch) in its `build`
 repository. Supplied tools/checkouts are an explicit escape hatch from the

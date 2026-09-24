@@ -8,7 +8,13 @@ the types and runtime behavior. Apply it to prepared checkouts before building:
 
 ```sh
 git -C /path/to/v8 apply /path/to/v8-cmake/patches/system-stl.patch
+git -C /path/to/v8 apply /path/to/v8-cmake/patches/system-stl-callable.patch
 ```
+
+`system-stl-callable.patch` allows V8's callable signature traits to recognize
+an inherited call operator. MSVC's `std::function` declares its call operator
+in a base class, so its member-pointer owner differs from the callable type.
+The patch deduces that owner independently without changing the signature.
 
 # Windows CRT selection
 

@@ -31,7 +31,8 @@ class FetchContentTests(unittest.TestCase):
         # Reconstruct patched context for each V8 system-STL patch target.
         target = None
         contents = []
-        for line in (ROOT / "patches/system-stl.patch").read_text().splitlines() + ["+++ "]:
+        stl_patches = "".join(path.read_text() for path in sorted((ROOT / "patches").glob("system-stl*.patch")))
+        for line in stl_patches.splitlines() + ["+++ "]:
             if line.startswith("+++ "):
                 if target is not None:
                     target.parent.mkdir(parents=True, exist_ok=True)
