@@ -32,6 +32,15 @@ Additional checks on **2026-09-25**:
   WSL with pinned Clang; repeating GN generation and Ninja reported no work.
   Before the fix, even a single unchanged object rebuilt because its dependency
   paths incorrectly resolved through the relative root-directory sysroot.
+- The full arm64 V8 monolith then built in WSL with four Ninja workers. A GCC
+  consumer executed JavaScript/Intl under QEMU and printed `V8 14.8.178.33: 42`.
+  Regenerating GN and rebuilding the complete monolith reported no work; the
+  consumer passed again. This used Ubuntu 26.04, GCC 15.2, and QEMU 10.2.
+
+The CI cross-build reached 3,894 of 4,002 steps before the original 180-minute
+limit expired. CI now uses four workers on the public Linux/Windows runners,
+retains two on the smaller macOS runner, and allows 240 minutes for cold builds.
+All runtime checks and the explicit no-work incremental check remain required.
 
 These local results supplement the full platform CI matrix; the WSL syntax
 checks alone do not establish Linux runtime success.

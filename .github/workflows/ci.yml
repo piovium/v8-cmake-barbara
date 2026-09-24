@@ -11,7 +11,7 @@ jobs:
   build:
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 180
+    timeout-minutes: 240
     strategy:
       fail-fast: false
       matrix:
@@ -46,6 +46,8 @@ jobs:
           BUILD_GENERATOR: ${{ matrix.generator }}
           CROSS: ${{ matrix.cross }}
           STATIC_CRT: ${{ matrix.static_crt }}
+          # Public Linux/Windows runners have 4 CPUs and 16 GB; macOS has 7 GB.
+          BUILD_JOBS: ${{ runner.os == 'macOS' && '2' || '4' }}
         run: |
           args=()
           if [ "$CROSS" = true ]; then
@@ -57,7 +59,7 @@ jobs:
             args+=('-DV8_ENABLE_I18N=OFF')
           fi
           cmake -S examples/fetchcontent -B build -G "$BUILD_GENERATOR" \
-            -DCMAKE_BUILD_TYPE="$BUILD_CONFIG" -DV8_BUILD_JOBS=2 "${args[@]}"
+            -DCMAKE_BUILD_TYPE="$BUILD_CONFIG" -DV8_BUILD_JOBS="$BUILD_JOBS" "${args[@]}"
       - name: Build real V8 and consumer
         run: cmake --build build --config ${{ matrix.config }} --target hello
       - name: Execute JavaScript and Intl smoke test
