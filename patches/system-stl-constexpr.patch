@@ -1,0 +1,14 @@
+--- a/BUILD.gn
++++ b/BUILD.gn
+@@ -5793,6 +5793,11 @@
+ }
+ 
+ v8_cluster_source_set("v8_base_without_compiler") {
++  if (is_win && is_clang && is_debug && !use_custom_libcxx) {
++    # MSVC's checked iterators increase the cost of constexpr flag sorting.
++    cflags_cc = [ "/clang:-fconstexpr-steps=10000000" ]
++  }
++
+   # Only targets in this file and gcmole can depend on this.
+   visibility = [
+     ":*",

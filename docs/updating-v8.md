@@ -32,6 +32,7 @@ code, and do not hand-maintain V8 source lists. Use a released four-part V8 tag.
    git -C <v8-checkout> apply --check /absolute/path/to/patches/system-stl-callable.patch
    git -C <v8-checkout> apply --check /absolute/path/to/patches/system-stl-headers.patch
    git -C <v8-checkout> apply --check /absolute/path/to/patches/system-stl-atomic.patch
+   git -C <v8-checkout> apply --check /absolute/path/to/patches/system-stl-constexpr.patch
    git -C <v8-checkout>/build apply --check /absolute/path/to/patches/windows-runtime.patch
    ```
 
@@ -40,7 +41,7 @@ code, and do not hand-maintain V8 source lists. Use a released four-part V8 tag.
    small CRT selection change; don't import unrelated modifications. Do not
    add V8 runtime patches to work around a toolchain or ABI mismatch. Recheck
    the standard type qualification, header dependencies, atomic initialization,
-   optional fallback, and inherited callable
+   constexpr budget, optional fallback, and inherited callable
    fixes in the system-STL patches, removing each hunk once upstream includes
    an equivalent correction.
 

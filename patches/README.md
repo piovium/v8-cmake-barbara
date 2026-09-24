@@ -11,6 +11,7 @@ git -C /path/to/v8 apply /path/to/v8-cmake/patches/system-stl.patch
 git -C /path/to/v8 apply /path/to/v8-cmake/patches/system-stl-callable.patch
 git -C /path/to/v8 apply /path/to/v8-cmake/patches/system-stl-headers.patch
 git -C /path/to/v8 apply /path/to/v8-cmake/patches/system-stl-atomic.patch
+git -C /path/to/v8 apply /path/to/v8-cmake/patches/system-stl-constexpr.patch
 ```
 
 `system-stl-callable.patch` allows V8's callable signature traits to recognize
@@ -24,6 +25,11 @@ The patch deduces that owner independently without changing the signature.
 `system-stl-atomic.patch` initializes a warning flag with `ATOMIC_FLAG_INIT`.
 Constructing `std::atomic_flag` from `false` is a libc++ extension; the standard
 initializer preserves the same initially clear state with the MSVC STL.
+
+`system-stl-constexpr.patch` increases Clang's constexpr evaluation budget for
+`v8_base_without_compiler` in Windows Debug builds with the system STL. Sorting
+V8's flag names with MSVC's checked iterators exceeds Clang's default budget.
+This retains iterator checking and compile-time initialization.
 
 # Windows CRT selection
 

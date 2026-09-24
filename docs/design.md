@@ -33,7 +33,8 @@ compatibility with system STLs. A callable-traits patch supports inherited call
 operators, including those in MSVC's `std::function`. The header-dependency patch
 includes `<memory>` for bigint's `std::unique_ptr`; another patch uses standard
 atomic-flag initialization. External checkouts must have applicable patches
-pre-applied. A failed patch check is an update
+pre-applied, including the Windows Debug constexpr-budget adjustment that keeps
+MSVC's iterator checking enabled. A failed patch check is an update
 failure, never a reason to silently ignore the patch or use `/NODEFAULTLIB`.
 
 The system STL and RTTI settings make ordinary CMake consumers practical. They
