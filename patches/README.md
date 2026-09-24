@@ -12,6 +12,7 @@ git -C /path/to/v8 apply /path/to/v8-cmake/patches/system-stl-callable.patch
 git -C /path/to/v8 apply /path/to/v8-cmake/patches/system-stl-headers.patch
 git -C /path/to/v8 apply /path/to/v8-cmake/patches/system-stl-atomic.patch
 git -C /path/to/v8 apply /path/to/v8-cmake/patches/system-stl-constexpr.patch
+git -C /path/to/v8 apply /path/to/v8-cmake/patches/system-stl-msvc.patch
 ```
 
 `system-stl-callable.patch` allows V8's callable signature traits to recognize
@@ -30,6 +31,9 @@ initializer preserves the same initially clear state with the MSVC STL.
 `v8_base_without_compiler` in Windows Debug builds with the system STL. Sorting
 V8's flag names with MSVC's checked iterators exceeds Clang's default budget.
 This retains iterator checking and compile-time initialization.
+
+`system-stl-msvc.patch` uses MSVC's `__assume(0)` for an unreachable path in
+the public Debug headers. Clang and GCC retain `__builtin_unreachable()`.
 
 # Windows CRT selection
 

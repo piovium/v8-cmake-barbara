@@ -17,6 +17,13 @@ and V8's pinned Clang/Ninja:
 - WSL Ubuntu with GCC 15.2 reproduced the missing `<memory>` error; all bigint
   translation units passed syntax checks after applying the header patch.
 
+Additional checks on **2026-09-25**:
+
+- The static-CRT/no-Intl Release variant built with Ninja Multi-Config and passed
+  CTest using the offline workspace.
+- The real Debug archive linked to an MSVC consumer and executed JavaScript/Intl
+  successfully after correcting the public-header unreachable intrinsic.
+
 These local results supplement the full platform CI matrix; the WSL syntax
 checks alone do not establish Linux runtime success.
 

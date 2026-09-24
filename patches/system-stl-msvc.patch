@@ -1,0 +1,17 @@
+--- a/include/v8-internal.h
++++ b/include/v8-internal.h
+@@ -492,7 +492,13 @@
+   constexpr TagRange(Tag first, Tag last) : first(first), last(last) {
+ #ifdef V8_ENABLE_CHECKS
+     // This would typically be a DCHECK, but that's not available here.
+-    if (first > last) __builtin_unreachable();  // Invalid tag range.
++    if (first > last) {  // Invalid tag range.
++#if defined(_MSC_VER) && !defined(__clang__)
++      __assume(0);
++#else
++      __builtin_unreachable();
++#endif
++    }
+ #endif
+   }
+ 

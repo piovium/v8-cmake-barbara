@@ -32,7 +32,8 @@ in V8's public template header and supplies an explicit zero to `value_or` for
 compatibility with system STLs. A callable-traits patch supports inherited call
 operators, including those in MSVC's `std::function`. The header-dependency patch
 includes `<memory>` for bigint's `std::unique_ptr`; another patch uses standard
-atomic-flag initialization. External checkouts must have applicable patches
+atomic-flag initialization. A public-header fix selects MSVC's unreachable
+intrinsic for MSVC consumers. External checkouts must have applicable patches
 pre-applied, including the Windows Debug constexpr-budget adjustment that keeps
 MSVC's iterator checking enabled. A failed patch check is an update
 failure, never a reason to silently ignore the patch or use `/NODEFAULTLIB`.
