@@ -28,6 +28,18 @@ def enabled(value):
     return str(value).upper() in {"1", "ON", "TRUE", "YES"}
 
 
+def run_download(args, **kwargs):
+    """Retry interrupted transfers without retrying compilation failures."""
+    for attempt in range(3):
+        try:
+            return run(args, **kwargs)
+        except subprocess.CalledProcessError:
+            if attempt == 2:
+                raise
+            print("[v8-cmake] Download failed; retrying...", flush=True)
+            time.sleep(5 * (attempt + 1))
+
+
 def load_lock(path):
     lock = json.loads(Path(path).read_text(encoding="utf-8"))
     for key in ("revision", "depot_tools_revision"):
@@ -93,16 +105,22 @@ def checkout_depot(path, revision, offline):
         path.mkdir(parents=True, exist_ok=True)
         run(["git", "init", path])
         run(["git", "-C", path, "remote", "add", "origin", DEPOT_URL])
-    run(["git", "-C", path, "fetch", "--depth=1", "origin", revision])
+    run_download(["git", "-C", path, "fetch", "--depth=1", "origin", revision])
     run(["git", "-C", path, "checkout", "--detach", revision])
 
 
-def build_environment(depot):
+def build_environment(depot, vs_install=""):
     env = os.environ.copy()
     # Keep the selected depot_tools revision; use the user's installed SDKs.
     env["DEPOT_TOOLS_UPDATE"] = "0"
     env["DEPOT_TOOLS_WIN_TOOLCHAIN"] = "0"
     env["DEPOT_TOOLS_METRICS"] = "0"
+    if vs_install:
+        # MSBuild supplies INCLUDE/LIB without necessarily setting VSINSTALLDIR.
+        # Upstream vcvars setup only clears those inherited paths when it knows
+        # a VS environment is active. Also honor CMake's selected VS instance.
+        env["GYP_MSVS_OVERRIDE_PATH"] = vs_install
+        env["VSINSTALLDIR"] = vs_install
     # Configure only child Git processes, leaving the user's global Git config
     # intact. Stable line endings keep the Windows patch applicable.
     count = int(env.get("GIT_CONFIG_COUNT", "0"))
@@ -141,7 +159,7 @@ def prepare(config, lock, workspace):
             checkout_depot(depot, lock["depot_tools_revision"], offline)
         elif not (depot / "gclient.py").is_file():
             raise RuntimeError(f"No gclient.py in V8_DEPOT_TOOLS_DIR: {depot}")
-    env = build_environment(depot)
+    env = build_environment(depot, config.get("vs_install", ""))
     if not external:
         # A separate solution directory avoids pulling unrelated Chromium trees.
         solution = {
@@ -158,9 +176,13 @@ def prepare(config, lock, workspace):
             if offline:
                 raise RuntimeError("Offline mode: no completed sync for this V8 version/platform")
             write_if_changed(workspace / ".gclient", gclient)
+            # Disabling depot_tools self-updates also skips Windows bootstrap.
+            # git_cache.py requires the generated git.bat even with Git on PATH.
+            if os.name == "nt" and not (depot / "git.bat").is_file():
+                run_download([depot / "bootstrap/win_tools.bat"], cwd=depot, env=env)
             # Use the wrapper so depot_tools bootstraps its own Python packages.
             command = depot / ("gclient.bat" if os.name == "nt" else "gclient")
-            run([command, "sync", "--no-history", "--shallow",
+            run_download([command, "sync", "--no-history", "--shallow",
                  "--revision", "v8@" + lock["revision"]], cwd=workspace, env=env)
             write_if_changed(stamp, stamp_value)
         actual = run(["git", "-C", source, "rev-parse", "HEAD"], capture=True).strip()
@@ -169,20 +191,30 @@ def prepare(config, lock, workspace):
     check_version(source, lock["version"])
     if not (source / "build/config/BUILDCONFIG.gn").is_file():
         raise RuntimeError(f"V8 dependencies are missing under {source}; run gclient sync first")
+    for name in ("system-stl.patch", "system-stl-callable.patch",
+                 "system-stl-headers.patch", "system-stl-atomic.patch",
+                 "system-stl-constexpr.patch", "system-stl-msvc.patch"):
+        apply_patch(source, Path(config["patch"]).with_name(name), external)
     if config["target_os"] == "win":
         apply_runtime_patch(source, Path(config["patch"]), external)
+    elif config["target_os"] == "linux":
+        apply_patch(source / "build", Path(config["patch"]).with_name("linux-relocations.patch"), external)
     return source, env
 
 
 def apply_runtime_patch(source, patch, external):
-    base = ["git", "-C", str(source / "build"), "apply"]
+    apply_patch(source / "build", patch, external)
+
+
+def apply_patch(repository, patch, external):
+    base = ["git", "-C", str(repository), "apply"]
     already_applied = subprocess.run(base + ["--reverse", "--check", str(patch)],
                                      stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     if already_applied.returncode == 0:
         return
     if external:
-        raise RuntimeError("Prepared Windows checkout needs patches/windows-runtime.patch; "
-                           "apply it with git -C <v8>/build apply <patch> first")
+        raise RuntimeError(f"Prepared checkout needs {patch.name}; "
+                           f"apply it with git -C {repository} apply {patch} first")
     run(base + ["--check", patch])
     run(base + [patch])
 
@@ -225,7 +257,10 @@ def gn_args(config):
         # target_sysroot applies independently of use_sysroot. Keep Chromium's
         # implicit Debian sysroot off for host tools using the host libstdc++.
         args["use_sysroot"] = False
-        if config["sysroot"]:
+        # '/' denotes the host's multiarch layout, not a separate sysroot.
+        # GN rebases it to a relative path; Clang then finds GCC through /lib
+        # symlinks and emits dependencies that Ninja normalizes to missing paths.
+        if config["sysroot"] and config["sysroot"] != "/":
             args["target_sysroot"] = config["sysroot"]
     elif config["target_os"] == "mac":
         # Apple's linker understands the installed SDK's TAPI format, including

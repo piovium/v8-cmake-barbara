@@ -44,6 +44,11 @@ class BuildContractTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "must match"):
             driver.gn_args(config(target_os="win", config="Debug"))
 
+    def test_multiarch_root_uses_compiler_discovery(self):
+        args = driver.gn_args(config(target_cpu="arm64", sysroot="/"))
+        self.assertIn('use_sysroot = false', args)
+        self.assertNotIn('target_sysroot =', args)
+
     def test_mac_sdk_and_deployment(self):
         args = driver.gn_args(config(target_os="mac", target_cpu="arm64",
                                     deployment_target="14.0", mac_sdk="macosx"))
@@ -71,15 +76,32 @@ class BuildContractTests(unittest.TestCase):
             self.assertEqual(os.environ["GIT_CONFIG_COUNT"], "1")
             self.assertEqual(env["DEPOT_TOOLS_UPDATE"], "0")
 
+    def test_visual_studio_instance_is_forwarded_to_upstream(self):
+        with patch.dict(os.environ, {}, clear=True):
+            env = driver.build_environment(None, "C:/VS/2026")
+            self.assertEqual(env["GYP_MSVS_OVERRIDE_PATH"], "C:/VS/2026")
+            self.assertEqual(env["VSINSTALLDIR"], "C:/VS/2026")
+            self.assertNotIn("VSINSTALLDIR", os.environ)
+
     def test_sync_failure_does_not_leave_success_stamp(self):
         with tempfile.TemporaryDirectory() as temp:
             workspace = Path(temp)
             cfg = config(source="", depot_tools="", offline="OFF")
             lock = driver.load_lock(ROOT / "v8-version.json")
-            with patch.object(driver, "checkout_depot"), patch.object(driver, "run", side_effect=subprocess.CalledProcessError(1, "gclient")):
+            with patch.object(driver, "checkout_depot"), patch.object(driver, "run_download", side_effect=subprocess.CalledProcessError(1, "gclient")):
                 with self.assertRaises(subprocess.CalledProcessError):
                     driver.prepare(cfg, lock, workspace)
             self.assertFalse((workspace / ".v8-cmake-sync.json").exists())
+
+    def test_download_retries_are_bounded(self):
+        failure = subprocess.CalledProcessError(1, "fetch")
+        with patch.object(driver, "run", side_effect=[failure, "done"]) as run, patch.object(driver.time, "sleep"):
+            self.assertEqual(driver.run_download(["fetch"]), "done")
+            self.assertEqual(run.call_count, 2)
+        with patch.object(driver, "run", side_effect=failure) as run, patch.object(driver.time, "sleep"):
+            with self.assertRaises(subprocess.CalledProcessError):
+                driver.run_download(["fetch"])
+            self.assertEqual(run.call_count, 3)
 
     def test_version_mismatch_is_rejected(self):
         with tempfile.TemporaryDirectory() as temp:

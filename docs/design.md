@@ -25,11 +25,24 @@ unchanged files. No configure-time network work or sub-build is necessary. The
 wrapper never edits a consumer's compiler flags or global build type. Generated
 output is confined to the binary tree; depot_tools also uses its standard caches.
 
-The single patch changes Chromium's `default_crt` and `release_crt` selection on
+The Windows patch changes Chromium's `default_crt` and `release_crt` selection on
 Windows. It adds one GN argument and two conditions; `/MD[d]` and `/MT[d]` remain
-implemented by upstream CRT configs. V8 source code is untouched. An external
-checkout must have this patch pre-applied. A failed patch check is an update
+implemented by upstream CRT configs. A second patch qualifies `std::nullptr_t`
+in V8's public template header and supplies an explicit zero to `value_or` for
+compatibility with system STLs. A callable-traits patch supports inherited call
+operators, including those in MSVC's `std::function`. The header-dependency patch
+includes `<memory>` for bigint's `std::unique_ptr`; another patch uses standard
+atomic-flag initialization. A public-header fix selects MSVC's unreachable
+intrinsic for MSVC consumers. External checkouts must have applicable patches
+pre-applied, including the Windows Debug constexpr-budget adjustment that keeps
+MSVC's iterator checking enabled. A failed patch check is an update
 failure, never a reason to silently ignore the patch or use `/NODEFAULTLIB`.
+
+The Linux build patch disables experimental CREL relocations so GNU ld can
+consume the exported archive. V8's internal links still use its pinned LLD.
+For the Debian/Ubuntu multiarch toolchain, `CMAKE_SYSROOT=/` uses Clang's native
+GCC discovery instead of passing a relative root-directory sysroot through GN.
+That preserves valid header dependency paths and prevents repeated compilation.
 
 The system STL and RTTI settings make ordinary CMake consumers practical. They
 also mean this configuration cannot use the current V8 sandbox, which depends

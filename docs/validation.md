@@ -1,5 +1,52 @@
 # Validation record
 
+## Windows x64 validation, 2026-09-24
+
+The repaired wrapper was tested locally with Visual Studio Community 2026
+(MSVC 19.51.36248), Windows SDK 10.0.26100.0, CMake 4.3.3, Python 3.14.6,
+and V8's pinned Clang/Ninja:
+
+- All 21 wrapper tests passed, including single- and multi-config FetchContent.
+- The real Release library and consumer built with the Visual Studio generator.
+- CTest passed; the executable printed `V8 14.8.178.33: 42`.
+- Copying only the executable into a clean directory passed the same smoke test.
+- An offline rebuild reported `ninja: no work to do`; archive, generated header,
+  and executable timestamps were unchanged. CTest passed again.
+- A focused callable-traits compile check failed before the inherited-call
+  patch and passed afterward using the pinned Clang with MSVC's STL.
+- WSL Ubuntu with GCC 15.2 reproduced the missing `<memory>` error; all bigint
+  translation units passed syntax checks after applying the header patch.
+
+Additional checks on **2026-09-25**:
+
+- The static-CRT/no-Intl Release variant built with Ninja Multi-Config and passed
+  CTest using the offline workspace.
+- The real Debug archive linked to an MSVC consumer and executed JavaScript/Intl
+  successfully after correcting the public-header unreachable intrinsic.
+- The full Debug CMake build and CTest passed. Its offline rebuild reported no
+  work and preserved archive, generated-header, and executable timestamps.
+- A Linux ELF probe built with pinned Clang reproduced GNU ld's CREL rejection;
+  the same source with standard relocations linked and ran successfully in WSL.
+- All 22 wrapper tests passed on Windows and WSL Ubuntu after the multiarch
+  incremental-build fix. A real arm64 `v8_libbase` build completed 181 steps in
+  WSL with pinned Clang; repeating GN generation and Ninja reported no work.
+  Before the fix, even a single unchanged object rebuilt because its dependency
+  paths incorrectly resolved through the relative root-directory sysroot.
+- The full arm64 V8 monolith then built in WSL with four Ninja workers. A GCC
+  consumer executed JavaScript/Intl under QEMU and printed `V8 14.8.178.33: 42`.
+  Regenerating GN and rebuilding the complete monolith reported no work; the
+  consumer passed again. This used Ubuntu 26.04, GCC 15.2, and QEMU 10.2.
+
+The CI cross-build reached 3,894 of 4,002 steps before the original 180-minute
+limit expired. CI now uses four workers on the public Linux/Windows runners,
+retains two on the smaller macOS runner, and allows 240 minutes for cold builds.
+All runtime checks and the explicit no-work incremental check remain required.
+
+These local results supplement the full platform CI matrix; the WSL syntax
+checks alone do not establish Linux runtime success.
+
+## Initial macOS validation
+
 Initial validation on **2026-09-24**, using the V8 14.8.178.33 lock in this
 repository:
 
